@@ -1,9 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18-alpine'
-        }
-    }
+    agent any
 
     environment {
         NODE_ENV = 'production'
@@ -21,14 +17,22 @@ pipeline {
                 stage('Backend') {
                     steps {
                         dir('backend') {
-                            sh 'npm ci'
+                            script {
+                                docker.image('node:18-alpine').inside {
+                                    sh 'npm ci'
+                                }
+                            }
                         }
                     }
                 }
                 stage('Frontend') {
                     steps {
                         dir('frontend') {
-                            sh 'npm ci'
+                            script {
+                                docker.image('node:18-alpine').inside {
+                                    sh 'npm ci'
+                                }
+                            }
                         }
                     }
                 }
@@ -38,7 +42,11 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('frontend') {
-                    sh 'npm run build'
+                    script {
+                        docker.image('node:18-alpine').inside {
+                            sh 'npm run build'
+                        }
+                    }
                 }
             }
         }
@@ -46,7 +54,11 @@ pipeline {
         stage('Start Backend') {
             steps {
                 dir('backend') {
-                    sh 'npm run dev' // Or use `npm start` for prod
+                    script {
+                        docker.image('node:18-alpine').inside {
+                            sh 'npm run dev'
+                        }
+                    }
                 }
             }
         }
