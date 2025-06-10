@@ -1,5 +1,9 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18-alpine'
+        }
+    }
 
     environment {
         NODE_ENV = 'production'
@@ -42,7 +46,7 @@ pipeline {
         stage('Start Backend') {
             steps {
                 dir('backend') {
-                    sh 'npm run dev' // or 'npm start' for production
+                    sh 'npm run dev' // Or use `npm start` for prod
                 }
             }
         }
