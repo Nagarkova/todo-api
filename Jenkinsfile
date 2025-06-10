@@ -6,7 +6,6 @@ pipeline {
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
@@ -14,12 +13,20 @@ pipeline {
         }
 
         stage('Install Dependencies') {
-            steps {
-                dir('frontend') {
-                    sh 'npm install'
+            parallel {
+                stage('Backend') {
+                    steps {
+                        dir('backend') {
+                            sh 'npm ci'
+                        }
+                    }
                 }
-                dir('backend') {
-                    sh 'npm install'
+                stage('Frontend') {
+                    steps {
+                        dir('frontend') {
+                            sh 'npm ci'
+                        }
+                    }
                 }
             }
         }
@@ -32,10 +39,10 @@ pipeline {
             }
         }
 
-        stage('Deploy Backend (optional)') {
+        stage('Start Backend') {
             steps {
                 dir('backend') {
-                    sh 'npm run start'
+                    sh 'npm run dev' // or 'npm start' for production
                 }
             }
         }
@@ -43,10 +50,10 @@ pipeline {
 
     post {
         always {
-            echo 'Pipeline completed.'
+            echo 'Pipeline finished.'
         }
         failure {
-            echo 'Build failed!'
+            echo 'Pipeline failed!'
         }
     }
 }
