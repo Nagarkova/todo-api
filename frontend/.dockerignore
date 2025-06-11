@@ -1,0 +1,18 @@
+# frontend/.dockerignore
+ncode_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.env.local
+.env.*.local
+dist
+build
+.nyc_output
+coverage
+.idea
+.vscode
+*.log
+Dockerfile
+Dockerfile.dev

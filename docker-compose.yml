@@ -1,0 +1,106 @@
+# docker-compose.yml
+services:
+  # Database
+  database:
+    image: postgres:15-alpine
+    container_name: todo-database
+    environment:
+      POSTGRES_USER: todouser
+      POSTGRES_PASSWORD: todopass
+      POSTGRES_DB: todoapp
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - todo-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U todouser -d todoapp"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: todo-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://todouser:todopass@database:5432/todoapp
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - todo-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  # Frontend UI
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: todo-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - todo-network
+    restart: unless-stopped
+
+  # Development backend (alternative)
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: todo-backend-dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://todouser:todopass@database:5432/todoapp
+    ports:
+      - "3001:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - todo-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    profiles:
+      - dev
+
+  # Development frontend (alternative)
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: todo-frontend-dev
+    ports:
+      - "3002:3000"
+    depends_on:
+      - backend-dev
+    networks:
+      - todo-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+
+networks:
+  todo-network:
+    driver: bridge
